@@ -617,7 +617,9 @@ void setState(uint8_t NewState) {
             timerAlarmWrite(timerA, PWM_95, false);                             // Enable Timer alarm, set to diode test (95%)
             SetCurrent(ChargeCurrent);                                          // Enable PWM
             break;      
-        case STATE_C:                                                           // State C2
+        case STATE_C: 
+			ChargeDelay = 10;  													// OLI
+			IsetBalanced = MIN_CURRENT*10;													// OLI, force ramp up from MIN_CURRENT
             uint8_t i;
             ActivationMode = 255;                                               // Disable ActivationMode
 
@@ -822,11 +824,13 @@ void CalcBalancedCurrent(char mod) {
         if (Idifference2 < Idifference) {
             Idifference = Idifference2;
         }
-        if (Idifference > 0) IsetBalanced += (Idifference / 4);                 // increase with 1/4th of difference (slowly increase current)
+		
+        if (Idifference > 0) IsetBalanced += (Idifference / 8);                 // OLI (before4)increase with 1/4th of difference (slowly increase current)
         else IsetBalanced += (Idifference * 100 / TRANSFORMER_COMP);            // last PWM setting + difference (immediately decrease current)
         if (IsetBalanced < 0) IsetBalanced = 0;
         if (IsetBalanced > 800) IsetBalanced = 800;                             // hard limit 80A (added 11-11-2017)
-    }
+		if (Imeasured == 0) IsetBalanced = MIN_CURRENT * 10;					// OLI But if no measurement, stay at MIN
+	}
 
 
 
